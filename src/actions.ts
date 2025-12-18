@@ -10,6 +10,7 @@ export function UpdateActions(self: ModuleInstance): void {
 	self.setActionDefinitions({
 		bulbOn: {
 			name: 'Turn Bulb On',
+			description: 'Turns the bulb on',
 			options: [],
 			callback: async () => {
 				const sendBuf = encode(wiz.setState(true))
@@ -24,6 +25,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		bulbOff: {
 			name: 'Turn Bulb Off',
+			description: 'Turns the bulb off',
 			options: [],
 			callback: async () => {
 				const sendBuf = encode(wiz.setState(false))
@@ -37,6 +39,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		setColor: {
 			name: 'Set Color (Will Turn On Bulb)',
+			description: 'Sets the bulb to a specific RGB color',
 			options: [
 				{
 					type: 'colorpicker',
@@ -90,6 +93,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		setScene: {
 			name: 'Set Scene (Will Turn On Bulb)',
+			description: 'Sets the bulb to a predefined scene',
 			options: [
 				{
 					type: 'dropdown',
@@ -125,6 +129,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		setTemp: {
 			name: 'Set Color Temperature (Will Turn On Bulb)',
+			description: 'Sets the bulb to a specific color temperature',
 			options: [
 				{
 					type: 'number',
@@ -161,6 +166,7 @@ export function UpdateActions(self: ModuleInstance): void {
 		},
 		setbrightness: {
 			name: 'Set Brightness (Will NOT Turn On Bulb)',
+			description: 'Sets the bulb brightness',
 			options: [
 				{
 					type: 'number',

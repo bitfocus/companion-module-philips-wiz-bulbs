@@ -11,6 +11,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 	self.setFeedbackDefinitions({
 		State: {
 			name: 'Bulb On/Off State',
+			description: 'Indicates whether the bulb is currently on or off',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: combineRgb(255, 0, 0),
@@ -27,6 +28,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		Scene: {
 			name: 'Current Scene',
+			description: 'Indicates whether the bulb is currently set to a specific scene',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: combineRgb(0, 255, 0),
@@ -52,6 +54,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		Brightness: {
 			name: 'Current Brightness',
+			description: 'Indicates whether the bulb is currently at a specific brightness',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: combineRgb(0, 0, 255),
@@ -78,6 +81,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		Temp: {
 			name: 'Current Color Temperature',
+			description: 'Indicates whether the bulb is currently at a specific color temperature',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: combineRgb(255, 165, 0),
@@ -104,6 +108,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 		},
 		Color: {
 			name: 'Current Color',
+			description: 'Indicates whether the bulb is currently set to a specific RGB color',
 			type: 'boolean',
 			defaultStyle: {
 				bgcolor: combineRgb(255, 0, 0),
