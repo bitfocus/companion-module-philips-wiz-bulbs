@@ -27,3 +27,16 @@ export function UpdateVariableValues(self: ModuleInstance): void {
 		speed: result?.speed ?? '',
 	})
 }
+
+export function ResetVariableValuesToDefault(self: ModuleInstance): void {
+	self.setVariableValues({
+		state: '',
+		brightness: '',
+		sceneId: '',
+		temp: '',
+		r: '',
+		g: '',
+		b: '',
+		speed: '',
+	})
+}

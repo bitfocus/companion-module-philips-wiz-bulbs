@@ -6,7 +6,7 @@ import {
 	UDPHelper,
 } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
-import { UpdateVariableDefinitions, UpdateVariableValues } from './variables.js'
+import { UpdateVariableDefinitions, UpdateVariableValues, ResetVariableValuesToDefault } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
@@ -40,6 +40,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		}
 
 		this.stopPolling()
+		ResetVariableValuesToDefault(this)
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {
