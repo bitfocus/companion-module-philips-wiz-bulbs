@@ -1,6 +1,15 @@
 import { combineRgb, splitRgb } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
 import { encode, wiz, WIZ_SCENES } from './wiz/index.js'
+
+function clampBrightness(value: number): number {
+	return Math.max(10, Math.min(100, Math.round(value)))
+}
+
+function clampTemperature(value: number): number {
+	return Math.max(2200, Math.min(6500, Math.round(value)))
+}
+
 export function UpdateActions(self: ModuleInstance): void {
 	const WIZ_SCENE_CHOICES: Array<{ id: number; label: string }> = WIZ_SCENES.map((s) => ({
 		id: s.id,
@@ -179,6 +188,114 @@ export function UpdateActions(self: ModuleInstance): void {
 			],
 			callback: async (action) => {
 				const sendBuf = encode(wiz.setBrightness(action.options.brightness as number))
+
+				if (self.udp !== undefined) {
+					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
+
+					await self.udp.send(sendBuf)
+					await self.pollOnce()
+				}
+			},
+		},
+		increaseBrightness: {
+			name: 'Increase Brightness By Value',
+			description: 'Increases current bulb brightness by a configurable value',
+			options: [
+				{
+					type: 'number',
+					label: 'Increase by',
+					id: 'delta',
+					default: 5,
+					min: 1,
+					max: 90,
+				},
+			],
+			callback: async (action) => {
+				const delta = action.options.delta as number
+				const currentBrightness = self.pilot?.result?.dimming ?? 100
+				const nextBrightness = clampBrightness(currentBrightness + delta)
+				const sendBuf = encode(wiz.setBrightness(nextBrightness))
+
+				if (self.udp !== undefined) {
+					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
+
+					await self.udp.send(sendBuf)
+					await self.pollOnce()
+				}
+			},
+		},
+		decreaseBrightness: {
+			name: 'Decrease Brightness By Value',
+			description: 'Decreases current bulb brightness by a configurable value',
+			options: [
+				{
+					type: 'number',
+					label: 'Decrease by',
+					id: 'delta',
+					default: 5,
+					min: 1,
+					max: 90,
+				},
+			],
+			callback: async (action) => {
+				const delta = action.options.delta as number
+				const currentBrightness = self.pilot?.result?.dimming ?? 100
+				const nextBrightness = clampBrightness(currentBrightness - delta)
+				const sendBuf = encode(wiz.setBrightness(nextBrightness))
+
+				if (self.udp !== undefined) {
+					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
+
+					await self.udp.send(sendBuf)
+					await self.pollOnce()
+				}
+			},
+		},
+		temperatureUp: {
+			name: 'Increase Temperature By Value',
+			description: 'Increases current color temperature by a configurable value',
+			options: [
+				{
+					type: 'number',
+					label: 'Increase by (Kelvin)',
+					id: 'delta',
+					default: 100,
+					min: 50,
+					max: 2000,
+				},
+			],
+			callback: async (action) => {
+				const delta = action.options.delta as number
+				const currentTemp = self.pilot?.result?.temp ?? 5600
+				const nextTemp = clampTemperature(currentTemp + delta)
+				const sendBuf = encode(wiz.setTemp(nextTemp))
+
+				if (self.udp !== undefined) {
+					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
+
+					await self.udp.send(sendBuf)
+					await self.pollOnce()
+				}
+			},
+		},
+		temperatureDown: {
+			name: 'Decrease Temperature By Value',
+			description: 'Decreases current color temperature by a configurable value',
+			options: [
+				{
+					type: 'number',
+					label: 'Decrease by (Kelvin)',
+					id: 'delta',
+					default: 100,
+					min: 50,
+					max: 2000,
+				},
+			],
+			callback: async (action) => {
+				const delta = action.options.delta as number
+				const currentTemp = self.pilot?.result?.temp ?? 5600
+				const nextTemp = clampTemperature(currentTemp - delta)
+				const sendBuf = encode(wiz.setTemp(nextTemp))
 
 				if (self.udp !== undefined) {
 					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
