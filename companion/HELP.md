@@ -6,6 +6,10 @@ This module gives you control of the Philips Wiz Lightbulbs.
 
 | Category | Name | Description |
 |----------|------|-------------|
+| Actions | Decrease Brightness By Value | Decreases current bulb brightness by a configurable value |
+| Actions | Decrease Temperature By Value | Decreases current color temperature by a configurable value |
+| Actions | Increase Brightness By Value | Increases current bulb brightness by a configurable value |
+| Actions | Increase Temperature By Value | Increases current color temperature by a configurable value |
 | Actions | Set Brightness (Will NOT Turn On Bulb) | Sets the bulb brightness |
 | Actions | Set Color (Will Turn On Bulb) | Sets the bulb to a specific RGB color |
 | Actions | Set Color Temperature (Will Turn On Bulb) | Sets the bulb to a specific color temperature |
