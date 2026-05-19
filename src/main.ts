@@ -104,6 +104,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			this.udp.on('listening', () => {
 				this.updateStatus(InstanceStatus.Ok)
 				this.pollInFlight = false
+				this.startPolling()
 			})
 
 			this.udp.on('status_change', (status: InstanceStatus, message: string | undefined) => {
@@ -111,18 +112,17 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 				this.pollInFlight = false
 			})
 
-			this.startPolling()
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
 	}
 
 	startPolling(): void {
-		const pollMs = Math.max(1000, this.config.pollMs || 1000)
 		if (this.config.enablePolling === true) {
-			this.pollTimer = setInterval(() => void this.pollOnce(), pollMs)
+			const pollMs = Math.max(1000, this.config.pollMs || 1000)
+			this.pollTimer = setInterval(() => void this.getCurrentState(), pollMs)
 		} else {
-			void this.pollOnce()
+			void this.getCurrentState()
 		}
 	}
 
@@ -141,7 +141,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		this.pollInFlight = false
 	}
 
-	async pollOnce(): Promise<void> {
+	async getCurrentState(): Promise<void> {
 		if (!this.udp || !this.config.host) return
 		if (this.pollInFlight) return
 
