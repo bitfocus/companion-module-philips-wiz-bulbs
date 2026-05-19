@@ -223,12 +223,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				const nextBrightness = clampBrightness(currentBrightness + delta)
 				const sendBuf = encode(wiz.setBrightness(nextBrightness))
 
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.getCurrentState()
-				}
+				await sendCommand(sendBuf)
 			},
 		},
 		decreaseBrightness: {
