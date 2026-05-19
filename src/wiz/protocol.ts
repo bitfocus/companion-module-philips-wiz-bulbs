@@ -46,7 +46,7 @@ export const WIZ_SCENES = [
 
 export type WizSceneId = (typeof WIZ_SCENES)[number]['id']
 
-type WizPGetilotResult = {
+type WizGetPilotResult = {
 	state?: boolean
 	dimming?: number
 	sceneId?: number
@@ -62,7 +62,7 @@ type WizPGetilotResult = {
 export type WizGetPilotResponse = {
 	method?: string
 	env?: string
-	result?: WizPGetilotResult
+	result?: WizGetPilotResult
 }
 
 export type SetBulbParameters = {
