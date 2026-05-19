@@ -2,14 +2,6 @@ import { combineRgb, splitRgb } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
 import { encode, wiz, WIZ_SCENES } from './wiz/index.js'
 
-function clampBrightness(value: number): number {
-	return Math.max(10, Math.min(100, Math.round(value)))
-}
-
-function clampTemperature(value: number): number {
-	return Math.max(2200, Math.min(6500, Math.round(value)))
-}
-
 export function UpdateActions(self: ModuleInstance): void {
 	const WIZ_SCENE_CHOICES: Array<{ id: number; label: string }> = WIZ_SCENES.map((s) => ({
 		id: s.id,
@@ -18,36 +10,27 @@ export function UpdateActions(self: ModuleInstance): void {
 
 	self.setActionDefinitions({
 		bulbOn: {
-			name: 'Turn Bulb On',
+			name: 'State: Turn Bulb On',
 			description: 'Turns the bulb on',
 			options: [],
 			callback: async () => {
 				const sendBuf = encode(wiz.setState(true))
 
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
+				await sendCommand(sendBuf)
 			},
 		},
 		bulbOff: {
-			name: 'Turn Bulb Off',
+			name: 'State: Turn Bulb Off',
 			description: 'Turns the bulb off',
 			options: [],
 			callback: async () => {
 				const sendBuf = encode(wiz.setState(false))
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
 
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
+				await sendCommand(sendBuf)
 			},
 		},
 		setColor: {
-			name: 'Set Color (Will Turn On Bulb)',
+			name: 'Color: Set Color (Will Turn On Bulb)',
 			description: 'Sets the bulb to a specific RGB color',
 			options: [
 				{
@@ -92,16 +75,11 @@ export function UpdateActions(self: ModuleInstance): void {
 					)
 				}
 
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
+				await sendCommand(sendBuf)
 			},
 		},
 		setScene: {
-			name: 'Set Scene (Will Turn On Bulb)',
+			name: 'Scene: Set Scene (Will Turn On Bulb)',
 			description: 'Sets the bulb to a predefined scene',
 			options: [
 				{
@@ -128,16 +106,11 @@ export function UpdateActions(self: ModuleInstance): void {
 					sendBuf = encode(wiz.setScene(action.options.sceneId as number, action.options.brightness as number))
 				}
 
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
+				await sendCommand(sendBuf)
 			},
 		},
 		setTemp: {
-			name: 'Set Color Temperature (Will Turn On Bulb)',
+			name: 'Color: Set Color Temperature (Will Turn On Bulb)',
 			description: 'Sets the bulb to a specific color temperature',
 			options: [
 				{
@@ -165,16 +138,55 @@ export function UpdateActions(self: ModuleInstance): void {
 					sendBuf = encode(wiz.setTemp(action.options.temp as number, action.options.brightness as number))
 				}
 
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
+				await sendCommand(sendBuf)
+			},
+		},
+		temperatureUp: {
+			name: 'Color: Increase Color Temperature By Value',
+			description: 'Increases current color temperature by a configurable value',
+			options: [
+				{
+					type: 'number',
+					label: 'Increase by (Kelvin)',
+					id: 'delta',
+					default: 100,
+					min: 50,
+					max: 2000,
+				},
+			],
+			callback: async (action) => {
+				const delta = action.options.delta as number
+				const currentTemp = self.pilot?.result?.temp ?? 5600
+				const nextTemp = clampTemperature(currentTemp + delta)
+				const sendBuf = encode(wiz.setTemp(nextTemp))
 
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
+				await sendCommand(sendBuf)
+			},
+		},
+		temperatureDown: {
+			name: 'Color: Decrease Color Temperature By Value',
+			description: 'Decreases current color temperature by a configurable value',
+			options: [
+				{
+					type: 'number',
+					label: 'Decrease by (Kelvin)',
+					id: 'delta',
+					default: 100,
+					min: 50,
+					max: 2000,
+				},
+			],
+			callback: async (action) => {
+				const delta = action.options.delta as number
+				const currentTemp = self.pilot?.result?.temp ?? 5600
+				const nextTemp = clampTemperature(currentTemp - delta)
+				const sendBuf = encode(wiz.setTemp(nextTemp))
+
+				await sendCommand(sendBuf)
 			},
 		},
 		setbrightness: {
-			name: 'Set Brightness (Will NOT Turn On Bulb)',
+			name: 'Brightness: Set Brightness (Will NOT Turn On Bulb)',
 			description: 'Sets the bulb brightness',
 			options: [
 				{
@@ -189,16 +201,11 @@ export function UpdateActions(self: ModuleInstance): void {
 			callback: async (action) => {
 				const sendBuf = encode(wiz.setBrightness(action.options.brightness as number))
 
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
+				await sendCommand(sendBuf)
 			},
 		},
 		increaseBrightness: {
-			name: 'Increase Brightness By Value',
+			name: 'Brightness: Increase Brightness By Value',
 			description: 'Increases current bulb brightness by a configurable value',
 			options: [
 				{
@@ -220,12 +227,12 @@ export function UpdateActions(self: ModuleInstance): void {
 					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
 
 					await self.udp.send(sendBuf)
-					await self.pollOnce()
+					await self.getCurrentState()
 				}
 			},
 		},
 		decreaseBrightness: {
-			name: 'Decrease Brightness By Value',
+			name: 'Brightness: Decrease Brightness By Value',
 			description: 'Decreases current bulb brightness by a configurable value',
 			options: [
 				{
@@ -243,67 +250,24 @@ export function UpdateActions(self: ModuleInstance): void {
 				const nextBrightness = clampBrightness(currentBrightness - delta)
 				const sendBuf = encode(wiz.setBrightness(nextBrightness))
 
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
-			},
-		},
-		temperatureUp: {
-			name: 'Increase Temperature By Value',
-			description: 'Increases current color temperature by a configurable value',
-			options: [
-				{
-					type: 'number',
-					label: 'Increase by (Kelvin)',
-					id: 'delta',
-					default: 100,
-					min: 50,
-					max: 2000,
-				},
-			],
-			callback: async (action) => {
-				const delta = action.options.delta as number
-				const currentTemp = self.pilot?.result?.temp ?? 5600
-				const nextTemp = clampTemperature(currentTemp + delta)
-				const sendBuf = encode(wiz.setTemp(nextTemp))
-
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
-			},
-		},
-		temperatureDown: {
-			name: 'Decrease Temperature By Value',
-			description: 'Decreases current color temperature by a configurable value',
-			options: [
-				{
-					type: 'number',
-					label: 'Decrease by (Kelvin)',
-					id: 'delta',
-					default: 100,
-					min: 50,
-					max: 2000,
-				},
-			],
-			callback: async (action) => {
-				const delta = action.options.delta as number
-				const currentTemp = self.pilot?.result?.temp ?? 5600
-				const nextTemp = clampTemperature(currentTemp - delta)
-				const sendBuf = encode(wiz.setTemp(nextTemp))
-
-				if (self.udp !== undefined) {
-					self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
-
-					await self.udp.send(sendBuf)
-					await self.pollOnce()
-				}
+				await sendCommand(sendBuf)
 			},
 		},
 	})
+
+	async function sendCommand(sendBuf: Buffer<ArrayBufferLike>) {
+		if (self.udp !== undefined) {
+			self.log('debug', `sending to ${self.config.host}: ${sendBuf.toString()}`)
+			await self.udp.send(sendBuf)
+			await self.getCurrentState()
+		}
+	}
+
+	function clampBrightness(value: number): number {
+		return Math.max(10, Math.min(100, Math.round(value)))
+	}
+
+	function clampTemperature(value: number): number {
+		return Math.max(2200, Math.min(6500, Math.round(value)))
+	}
 }
