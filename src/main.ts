@@ -6,7 +6,7 @@ import {
 	UDPHelper,
 } from '@companion-module/base'
 import { GetConfigFields, type ModuleConfig } from './config.js'
-import { UpdateVariableDefinitions } from './variables.js'
+import { UpdateVariableDefinitions, UpdateVariableValues, ResetVariableValuesToDefault } from './variables.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions } from './actions.js'
 import { UpdateFeedbacks } from './feedbacks.js'
@@ -40,6 +40,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		}
 
 		this.stopPolling()
+		ResetVariableValuesToDefault(this)
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {
@@ -63,6 +64,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 	updateVariableDefinitions(): void {
 		UpdateVariableDefinitions(this)
+		UpdateVariableValues(this)
 	}
 
 	async init_udp(): Promise<void> {
@@ -102,31 +104,31 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			this.udp.on('listening', () => {
 				this.updateStatus(InstanceStatus.Ok)
 				this.pollInFlight = false
+				this.startPolling()
 			})
 
 			this.udp.on('status_change', (status: InstanceStatus, message: string | undefined) => {
 				this.updateStatus(status, message)
 				this.pollInFlight = false
 			})
-
-			this.startPolling()
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
 	}
 
 	startPolling(): void {
-		const pollMs = Math.max(1000, this.config.pollMs || 1000)
 		if (this.config.enablePolling === true) {
-			this.pollTimer = setInterval(() => void this.pollOnce(), pollMs)
+			const pollMs = Math.max(1000, this.config.pollMs || 1000)
+			this.pollTimer = setInterval(() => void this.getCurrentState(), pollMs)
 		} else {
-			void this.pollOnce()
+			void this.getCurrentState()
 		}
 	}
 
 	onPilotUpdate(newPilot: WizGetPilotResponse): void {
 		this.pilot = newPilot
 		this.log('debug', `Received pilot update: ${JSON.stringify(newPilot)}`)
+		UpdateVariableValues(this)
 
 		this.checkFeedbacks('State', 'Scene', 'Brightness', 'Color', 'Temp')
 		// this.checkFeedbacks('bulb_on', 'scene', 'brightness')
@@ -138,7 +140,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		this.pollInFlight = false
 	}
 
-	async pollOnce(): Promise<void> {
+	async getCurrentState(): Promise<void> {
 		if (!this.udp || !this.config.host) return
 		if (this.pollInFlight) return
 
