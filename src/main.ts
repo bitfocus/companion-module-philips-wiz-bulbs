@@ -111,7 +111,6 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 				this.updateStatus(status, message)
 				this.pollInFlight = false
 			})
-
 		} else {
 			this.updateStatus(InstanceStatus.BadConfig)
 		}
